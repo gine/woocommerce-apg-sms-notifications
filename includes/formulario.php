@@ -246,6 +246,13 @@
         <td class="forminp forminp-number"><input id="apg_sms_settings[notificacion]" name="apg_sms_settings[notificacion]" type="checkbox" value="1" <?php echo ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == "1" ? 'checked="checked"' : '' ); ?> tabindex="<?php echo $tab++; ?>" /></td>
       </tr>
       <tr valign="top">
+        <th scope="row" class="titledesc"> <label for="apg_sms_settings[notificacion_today_only]">
+            <?php _e( 'New order notification today only:', 'apg_sms' ); ?>
+          </label>
+          <span class="woocommerce-help-tip" data-tip="<?php _e( "Check if you want to receive a SMS message when there's a new order only wen the order must be delivered today", 'apg_sms' ); ?>"></span> </th>
+        <td class="forminp forminp-number"><input id="apg_sms_settings[notificacion]" name="apg_sms_settings[notificacion_today_only]" type="checkbox" value="1" <?php echo ( isset( $configuracion['notificacion_today_only'] ) && $configuracion['notificacion_today_only'] == "1" ? 'checked="checked"' : '' ); ?> tabindex="<?php echo $tab++; ?>" /></td>
+      </tr>
+      <tr valign="top">
         <th scope="row" class="titledesc"> <label for="apg_sms_settings[internacional]">
             <?php _e( 'Send international <abbr title="Short Message Service" lang="en">SMS</abbr>?:', 'apg_sms' ); ?>
           </label>
