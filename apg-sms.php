@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WooCommerce - APG SMS Notifications
-Version: 2.8
+Version: 2.10
 Plugin URI: https://wordpress.org/plugins/woocommerce-apg-sms-notifications/
 Description: Add to WooCommerce SMS notifications to your clients for order status changes. Also you can receive an SMS message when the shop get a new order and select if you want to send international SMS. The plugin add the international dial code automatically to the client phone number.
 Author URI: http://artprojectgroup.es/
@@ -187,7 +187,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		$shipping_date = $pedido;
 		$nombres_de_estado	= array( 
 			'on-hold'		=> 'Recibido', 
-			'processing'		=> __( 'Processing', 'apg_sms' ), 
+			'processing'	=> __( 'Processing', 'apg_sms' ), 
 			'completed'		=> __( 'Completed', 'apg_sms' ) 
 		);
 		foreach ( $nombres_de_estado as $nombre_de_estado => $traduccion ) {
@@ -201,7 +201,17 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		$enviar_envio			= ( $telefono != $telefono_envio && isset( $configuracion['envio'] ) && $configuracion['envio'] == 1 ) ? true : false;
 		$internacional			= ( $pedido->billing_country && ( WC()->countries->get_base_country() != $pedido->billing_country ) ) ? true : false;
 		$internacional_envio	= ( $pedido->shipping_country && ( WC()->countries->get_base_country() != $pedido->shipping_country ) ) ? true : false;
-		$telefono_propietario	= apg_sms_procesa_el_telefono( $pedido, $configuracion['telefono'], $configuracion['servicio'], true );
+		//Teléfono propietario
+		if ( strpos( $configuracion['telefono'], "|" ) ) {
+			$administradores = explode( "|", $configuracion['telefono'] ); //Existe más de uno
+		}
+		if ( isset( $administradores ) ) {
+			foreach( $administradores as $administrador ) {
+				$telefono_propietario[]	= apg_sms_procesa_el_telefono( $pedido, $administrador, $configuracion['servicio'], true );
+			}
+		} else {
+			$telefono_propietario	= apg_sms_procesa_el_telefono( $pedido, $configuracion['telefono'], $configuracion['servicio'], true );	
+		}
 		
 		//WPML
 		if ( function_exists( 'icl_register_string' ) || !$wpml_activo ) { //Versión anterior a la 3.2
@@ -219,22 +229,34 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		//Envía el SMS
 		if ( $estado == 'Recibido' ) {
 			if ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == 1 ) {
-				apg_sms_envia_sms( $configuracion, $telefono_propietario, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para el propietario
-			}
-		} else if ( $estado == __( 'Processing', 'apg_sms' ) ) {
-			//QUI:
-			if ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == 1 && $notificacion ) {
-				//Only if the delivery date is between today and tomorrow at the same date
-				if( isset( $configuracion['notificacion_today_only'] ) && $configuracion['notificacion_today_only'] == 1 ) {
-					$tomorrow = strtotime(date('Y-m-d H:m', strtotime('+1 day')));
-					$jckwds_meta = jckwds_has_date_or_time($pedido);
-					if($jckwds_meta !== false && $jckwds_meta['time'] < $tomorrow) {
-						$mensaje_pedido = "Nuovo ordine n.: ".$pedido->id." - Da evadere il: ".$jckwds_meta['date']." @ ".$jckwds_meta['slot'];
-						apg_sms_envia_sms( $configuracion, $telefono_propietario, $mensaje_pedido ); //Mensaje para el propietario
+				if ( !is_array( $telefono_propietario ) ) {
+					apg_sms_envia_sms( $configuracion, $telefono_propietario, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para el propietario
+				} else {
+					foreach( $telefono_propietario as $administrador ) {
+						apg_sms_envia_sms( $configuracion, $administrador, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para los propietarios
 					}
-				}	else {
-					apg_sms_envia_sms( $configuracion, $telefono_propietario, 'not:'.$configuracion['notificacion_today_only'] ); //Mensaje para el propietario
-					//apg_sms_envia_sms( $configuracion, $telefono_propietario, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para el propietario
+				}
+			}
+			$mensaje = apg_sms_procesa_variables( $mensaje_recibido, $pedido, $configuracion['variables'] );
+		} else if ( $estado == __( 'Processing', 'apg_sms' ) ) {
+			if ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == 1 && $notificacion ) {
+				if ( !is_array( $telefono_propietario ) ) {		
+					//Only if the delivery date is between today and tomorrow at the same date
+					if( isset( $configuracion['notificacion_today_only'] ) && $configuracion['notificacion_today_only'] == 1 ) {
+						$tomorrow = strtotime(date('Y-m-d H:m', strtotime('+1 day')));
+						$jckwds_meta = jckwds_has_date_or_time($pedido);
+						if($jckwds_meta !== false && $jckwds_meta['time'] < $tomorrow) {
+							$mensaje_pedido = "Nuovo ordine n.: ".$pedido->id." - Da evadere il: ".$jckwds_meta['date']." @ ".$jckwds_meta['slot'];
+							apg_sms_envia_sms( $configuracion, $telefono_propietario, $mensaje_pedido ); //Mensaje para el propietario
+						}
+					}	else {
+						apg_sms_envia_sms( $configuracion, $telefono_propietario, 'not:'.$configuracion['notificacion_today_only'] ); //Mensaje para el propietario
+						//apg_sms_envia_sms( $configuracion, $telefono_propietario, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para el propietario
+					}
+				} else {
+					foreach( $telefono_propietario as $administrador ) {
+						apg_sms_envia_sms( $configuracion, $administrador, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para los propietarios
+					}
 				}
 			}
 			$mensaje = apg_sms_procesa_variables( $mensaje_procesando, $pedido, $configuracion['variables'] );
@@ -244,8 +266,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 			$mensaje = apg_sms_procesa_variables( $configuracion[$estado], $pedido, $configuracion['variables'] );
 		}
 
-		if ( ( !$internacional || ( isset( $configuracion['internacional'] ) && $configuracion['internacional'] == 1 ) ) && !$notificacion && $enviar_envio ) {
-			apg_sms_envia_sms( $configuracion, $telefono, 'test3' ); //Mensaje para el teléfono de facturación
+		if ( ( !$internacional || ( isset( $configuracion['internacional'] ) && $configuracion['internacional'] == 1 ) ) && !$notificacion ) {
+			apg_sms_envia_sms( $configuracion, $telefono, $mensaje ); //Mensaje para el teléfono de facturación
 		}
 		if ( ( !$internacional_envio || ( isset( $configuracion['internacional'] ) && $configuracion['internacional'] == 1 ) ) && !$notificacion && $enviar_envio ) {
 			apg_sms_envia_sms( $configuracion, $telefono_envio, $mensaje ); //Mensaje para el teléfono de envío
@@ -254,7 +276,6 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	add_action( 'woocommerce_order_status_pending_to_on-hold_notification', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como recibido
 	add_action( 'woocommerce_order_status_processing', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como procesando
 	add_action( 'woocommerce_order_status_completed', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como completo
-	//add_action( 'send_test', 'apg_sms_procesa_estados', 10, 2);
 
 	function apg_sms_notificacion( $pedido ) {
 		apg_sms_procesa_estados( $pedido, true );

@@ -1,10 +1,10 @@
 === WooCommerce - APG SMS Notifications ===
 Contributors: artprojectgroup
 Donate link: http://artprojectgroup.es/tienda/donacion
-Tags: Art Project Group, APG, Plugins, WooCommerce, e-Commerce, Commerce, Shop, Virtual shop, SMS, SMS notifications, SMS gateway, VoipStunt, Solutions Infini, Twilio, Clickatell, Clockwork, BulkSMS, OPEN DND, Moreify, MSG91, mVaayoo, Esebun Business (Enterprise & Developers only), iSMS Malaysia, SMS Lane (Transactional SMS only), SMS Country, LabsMobile Spain, Plivo, VoipBusterPro, VoipBuster, SMS Discount, SIP Discount, Spring Edge, Custom Order Statuses & Actions, WooCommerce Order Status & Actions Manager, WooCommerce Advance Order Status, WooCommerce Sequential Order Numbers Pro, WPML
+Tags: Art Project Group, APG, Plugins, WooCommerce, e-Commerce, Commerce, Shop, Virtual shop, SMS, SMS notifications, SMS gateway, VoipStunt, Solutions Infini, Twilio, Clickatell, Clockwork, BulkSMS, OPEN DND, Moreify, MSG91, mVaayoo, Nexmo, Esebun Business (Enterprise & Developers only), iSMS Malaysia, SMS Lane (Transactional SMS only), SMS Country, LabsMobile Spain, Plivo, VoipBusterPro, VoipBuster, SMS Discount, SIP Discount, Spring Edge, Custom Order Statuses & Actions, WooCommerce Order Status & Actions Manager, WooCommerce Advance Order Status, WooCommerce Sequential Order Numbers Pro, WPML
 Requires at least: 3.8
-Tested up to: 4.7
-Stable tag: 2.8
+Tested up to: 4.7.1
+Stable tag: 2.10
 WC requires at least: 2.1
 WC tested up to: 2.7
 License: GPLv3
@@ -28,6 +28,7 @@ Añade a tu tienda WooCommerce notificaciones SMS a tus clientes cuando cambie e
  * [Moreify](https://www.moreify.com/).
  * [MSG91](https://msg91.com/).
  * [mVaayoo](http://www.mvaayoo.com/).
+ * [Nexmo](https://www.nexmo.com).
  * [OPEN DND](http://www.opendnd.in/).
  * [Plivo](https://www.plivo.com/).
  * [SIP Discount](https://www.sipdiscount.com/dashboard).
@@ -40,7 +41,7 @@ Añade a tu tienda WooCommerce notificaciones SMS a tus clientes cuando cambie e
  * [VoipBuster](https://www.voipbuster.com/dashboard).
  * [VoipBusterPro](https://www.voipbusterpro.com/dashboard).
  * [VoipStunt](https://www.voipstunt.com/dashboard).
-* Posibilidad de informar al propietario de la tienda sobre nuevos pedidos.
+* Posibilidad de informar al propietario o propietarios de la tienda sobre nuevos pedidos.
 * Posibilidad de enviar, o no, SMS internacionales.
 * Posibilidad de notificar al número de teléfono de envío, si es distinto del número de teléfono de facturación.
 * 100% compatible con [WPML](https://wpml.org/?aid=80296&affiliate_key=m66Ss5ps0xoS).
@@ -110,6 +111,11 @@ Si necesitas ayuda para configurar o instalar **WooCommerce - APG SMS Notificati
 1. Captura de pantalla de WooCommerce - APG SMS Notifications.
 
 == Changelog ==
+= 2.10 =
+* Añadida opción de notificación múltiple a varios teléfonos de propietarios. **Actualización patrocinada por [Jeff Chambliss](http://www.stickertalk.com/)**.
+= 2.9 =
+* Añadido soporte para Nexmo **Modificación ideada por [Gine](https://github.com/artprojectgroup/woocommerce-apg-sms-notifications/pull/1)**.
+* Actualización de la URL de la API de BulkSMS.
 = 2.8 =
 * Arreglo de distintos errores.
 * Traducción idioma francés gracias a ([**Studios Jurdan**](http://www.jurdan.biz)).
@@ -298,9 +304,8 @@ Si necesitas ayuda para configurar o instalar **WooCommerce - APG SMS Notificati
 * Versión inicial.
 
 == Upgrade Notice ==
-= 2.8 =
-* Arreglo de distintos errores.
-* Traducción idioma francés gracias a ([**Studios Jurdan**](http://www.jurdan.biz)).
+= 2.10 =
+* Añadida opción de notificación múltiple a varios teléfonos de propietarios. **Actualización patrocinada por [Jeff Chambliss](http://www.stickertalk.com/)**.
 
 ==Traducciones ==
 * *English*: by [**Art Project Group**](http://artprojectgroup.es/) (default language).

@@ -27,7 +27,7 @@ function apg_sms_envia_sms( $configuracion, $telefono, $mensaje ) {
 			$respuesta = wp_remote_get( "https://api.clockworksms.com/http/send.aspx?key=" . $configuracion['identificador_clockwork'] . "&to=" . $telefono . "&content=" . apg_sms_normaliza_mensaje( $mensaje ) );
 			break;
 		case "bulksms":
-			$respuesta = wp_remote_post( "https://bulksms.vsms.net/eapi/submission/send_sms/2/2.0?username=" . urlencode( $configuracion['usuario_bulksms'] ) . "&password=" . urlencode( $configuracion['contrasena_bulksms'] ) . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&msisdn=" . urlencode( $telefono ) );
+			$respuesta = wp_remote_post( "http://usa.bulksms.com/eapi/submission/send_sms/2/2.0?username=" . urlencode( $configuracion['usuario_bulksms'] ) . "&password=" . urlencode( $configuracion['contrasena_bulksms'] ) . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&msisdn=" . urlencode( $telefono ) );
 			break;
 		case "open_dnd":
 			$respuesta = wp_remote_get( "http://txn.opendnd.in/pushsms.php?username=" . $configuracion['usuario_open_dnd'] . "&password=" . $configuracion['contrasena_open_dnd'] . "&message=" . apg_sms_codifica_el_mensaje( apg_sms_normaliza_mensaje( $mensaje ) ) . "&sender=" . $configuracion['identificador_open_dnd'] . "&numbers=" . $telefono );
@@ -48,7 +48,7 @@ function apg_sms_envia_sms( $configuracion, $telefono, $mensaje ) {
 			$respuesta = wp_remote_get( "https://members.moreify.com/api/v1/sendSms?project=" . $configuracion['proyecto_moreify'] . "&password=" . $configuracion['identificador_moreify'] . "&phonenumber=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) );
 			break;
 		case "nexmo":
-			$respuesta = wp_remote_get( "https://rest.nexmo.com/sms/json?api_key=".$configuracion['clave_nexmo']."&api_secret=".$configuracion['identificador_nexmo']."&from=NEXMO&to=".$telefono."&text=".apg_sms_codifica_el_mensaje( $mensaje ));
+			$respuesta = wp_remote_get( "https://rest.nexmo.com/sms/json?api_key=" . $configuracion['clave_nexmo'] . "&api_secret=" . $configuracion['identificador_nexmo'] . "&from=NEXMO&to=" . $telefono . "&text=" . apg_sms_codifica_el_mensaje( $mensaje ) );
 			break;
 		case "twilio":
 			$argumentos['header'] = "Accept-Charset: utf-8\r\n";
@@ -65,7 +65,7 @@ function apg_sms_envia_sms( $configuracion, $telefono, $mensaje ) {
 				'mobiles' 	=> $telefono,
 				'message' 	=> apg_sms_codifica_el_mensaje( apg_sms_normaliza_mensaje( $mensaje ) ),
 				'sender' 	=> $configuracion['identificador_msg91'],
-				'route' 		=> $configuracion['ruta_msg91']
+				'route' 	=> $configuracion['ruta_msg91']
 			 );
 			$respuesta = wp_remote_post( "http://control.msg91.com/sendhttp.php", $argumentos );
 			break;
@@ -88,7 +88,7 @@ function apg_sms_envia_sms( $configuracion, $telefono, $mensaje ) {
 				'receipientno' 	=> $telefono,
 				'msgtxt' 		=> $mensaje,
 				'dcs' 			=> "0",
-				'state' 			=> "4",
+				'state' 		=> "4",
 			 );
 			$respuesta = wp_remote_post( "http://api.mVaayoo.com/mvaayooapi/MessageCompose", $argumentos );
 			break;
@@ -99,7 +99,7 @@ function apg_sms_envia_sms( $configuracion, $telefono, $mensaje ) {
 				'mobilenumber' 	=> $telefono,
 				'sid' 			=> $configuracion['sid_smscountry'],
 				'message' 		=> $mensaje,
-				'mtype' 			=> "N",
+				'mtype' 		=> "N",
 				'DR' 			=> "Y",
 			 );
 			$respuesta = wp_remote_post( "http://api.smscountry.com/SMSCwebservice_bulk.aspx", $argumentos );
@@ -107,7 +107,7 @@ function apg_sms_envia_sms( $configuracion, $telefono, $mensaje ) {
 		case "plivo":
 			$argumentos['headers'] = array(
 				'Authorization'	=> 'Basic ' . base64_encode( $configuracion['usuario_plivo'] . ":" . $configuracion['clave_plivo'] ),
-				'Connection'		=> 'close',
+				'Connection'	=> 'close',
 				'Content-Type'	=> 'application/json',
 			);
 			$argumentos['body'] = json_encode( array(
