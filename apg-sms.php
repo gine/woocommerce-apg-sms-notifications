@@ -1,13 +1,13 @@
 <?php
 /*
 Plugin Name: WooCommerce - APG SMS Notifications
-Version: 2.10
+Version: 2.11
 Plugin URI: https://wordpress.org/plugins/woocommerce-apg-sms-notifications/
 Description: Add to WooCommerce SMS notifications to your clients for order status changes. Also you can receive an SMS message when the shop get a new order and select if you want to send international SMS. The plugin add the international dial code automatically to the client phone number.
-Author URI: http://artprojectgroup.es/
+Author URI: https://artprojectgroup.es/
 Author: Art Project Group
 Requires at least: 3.8
-Tested up to: 4.7
+Tested up to: 4.7.3
 
 Text Domain: apg_sms
 Domain Path: /languages
@@ -29,9 +29,9 @@ define( 'DIRECCION_apg_sms', plugin_basename( __FILE__ ) );
 $apg_sms = array( 	
 	'plugin' 		=> 'WooCommerce - APG SMS Notifications', 
 	'plugin_uri' 	=> 'woocommerce-apg-sms-notifications', 
-	'donacion' 		=> 'http://artprojectgroup.es/tienda/donacion',
-	'soporte' 		=> 'http://wcprojectgroup.es/tienda/ticket-de-soporte',
-	'plugin_url' 	=> 'http://artprojectgroup.es/plugins-para-wordpress/plugins-para-woocommerce/woocommerce-apg-sms-notifications', 
+	'donacion' 		=> 'https://artprojectgroup.es/tienda/donacion',
+	'soporte' 		=> 'https://wcprojectgroup.es/tienda/ticket-de-soporte',
+	'plugin_url' 	=> 'https://artprojectgroup.es/plugins-para-wordpress/plugins-para-woocommerce/woocommerce-apg-sms-notifications', 
 	'ajustes' 		=> 'admin.php?page=apg_sms', 
 	'puntuacion' 	=> 'https://wordpress.org/support/view/plugin-reviews/woocommerce-apg-sms-notifications' 
 );
@@ -76,12 +76,14 @@ function apg_sms_enlace_de_ajustes( $enlaces ) {
 $plugin = DIRECCION_apg_sms; 
 add_filter( "plugin_action_links_$plugin", 'apg_sms_enlace_de_ajustes' );
 
+include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 //¿Está activo WooCommerce?
-if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+if ( is_plugin_active( 'woocommerce/woocommerce.php' ) || is_network_only_plugin( 'woocommerce/woocommerce.php' ) ) {
 	//Comprobamos si está instalado y activo WPML
 	$wpml_activo = function_exists( 'icl_object_id' );
 	
-	function apg_sms_inicializacion() {
+	//Actualiza las traducciones de los mensajes SMS
+	function apg_registra_wpml( $configuracion ) {
 		global $wpml_activo;
 		
 		//Registramos los textos en WPML
@@ -98,9 +100,13 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 			do_action( 'wpml_register_single_string', 'apg_sms', 'mensaje_completado', $configuracion['mensaje_completado'] );
 			do_action( 'wpml_register_single_string', 'apg_sms', 'mensaje_nota', $configuracion['mensaje_nota'] );
 		}
-		
-		//Cargamos los proveedores SMS
-		include_once( 'includes/admin/proveedores.php' );
+	}
+	
+	//Inicializamos las traducciones y los proveedores
+	function apg_sms_inicializacion() {
+		global $configuracion;
+
+		apg_registra_wpml( $configuracion );
 	}
 	add_action( 'init', 'apg_sms_inicializacion' );
 
@@ -127,7 +133,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	function apg_sms_registra_opciones() {
 		global $configuracion;
 	
-		register_setting( 'apg_sms_settings_group', 'apg_sms_settings' );
+		register_setting( 'apg_sms_settings_group', 'apg_sms_settings', 'apg_sms_update' );
+		$configuracion = get_option( 'apg_sms_settings' );
 
 		if ( ( class_exists( 'WC_SA' ) || class_exists( 'AppZab_Woo_Advance_Order_Status' ) || isset( $GLOBALS['advorder_lite_orderstatus'] ) ) && isset( $configuracion['estados_personalizados'] ) ) { //Comprueba la existencia de plugins de estado personalizado
 			foreach ( $configuracion['estados_personalizados'] as $estado ) {
@@ -136,6 +143,12 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		}
 	}
 	add_action( 'admin_init', 'apg_sms_registra_opciones' );
+	
+	function apg_sms_update( $configuracion ) {
+		apg_registra_wpml( $configuracion );
+		
+		return $configuracion;
+	}
 
     /**
      * Helper: Check if order has date or time
@@ -148,7 +161,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 			'date' => false,
 			'time' => false,
 			'slot' => false
-    );
+        );
 
 		$has_meta = false;
 
@@ -159,28 +172,31 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		if( ( $date && $date != "" ) ) {
 			$meta['date'] = $date;
 			$has_meta = true;
-    }
+        }
 
 		if( ( $time && $time != "" ) ) {
-    	$meta['time'] = $time;
-      $has_meta = true;
-    }
+            $meta['time'] = $time;
+            $has_meta = true;
+        }
 
 		if( ( $slot && $slot != "" ) ) {
-    	$meta['slot'] = $slot;
-    }
+            $meta['slot'] = $slot;
+        }
 
-    if( $has_meta ) {
+        if( $has_meta ) {
 			return $meta;
 		}
 
-  	return false;
+        return false;
 	}
 
 
 	//Procesa el SMS
 	function apg_sms_procesa_estados( $pedido, $notificacion = false ) {
 		global $configuracion, $wpml_activo;
+		
+		//Cargamos los proveedores SMS
+		include_once( 'includes/admin/proveedores.php' );
 
 		$pedido				= new WC_Order( $pedido );
 		$estado				= $pedido->status;
@@ -227,9 +243,35 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		}
 		
 		//Envía el SMS
-		if ( $estado == 'Recibido' ) {
-			if ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == 1 ) {
-				if ( !is_array( $telefono_propietario ) ) {
+		//if ( $estado == 'Recibido' ) {
+			// if ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == 1 ) {
+			// 	if ( !is_array( $telefono_propietario ) ) {
+			// 		apg_sms_envia_sms( $configuracion, $telefono_propietario, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para el propietario
+			// 	} else {
+			// 		foreach( $telefono_propietario as $administrador ) {
+			// 			apg_sms_envia_sms( $configuracion, $administrador, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para los propietarios
+			// 		}
+			// 	}
+			// }
+			// $mensaje = apg_sms_procesa_variables( $mensaje_recibido, $pedido, $configuracion['variables'] );
+		//} else
+        if ( $estado == __( 'Processing', 'apg_sms' ) ) {
+            if( isset( $configuracion['notificacion_today_only'] ) && $configuracion['notificacion_today_only'] == 1 ) {
+                if ( !is_array( $telefono_propietario ) ) {		
+                    //Only if the delivery date is between today and tomorrow at the same date
+                    $tomorrow = strtotime(date('Y-m-d H:m', strtotime('+1 day')));
+                    $jckwds_meta = jckwds_has_date_or_time($pedido);
+                    if($jckwds_meta !== false && $jckwds_meta['time'] < $tomorrow) {
+                        $mensaje_pedido = "Nuovo ordine n.: ".$pedido->id." - Da evadere il: ".$jckwds_meta['date']." @ ".$jckwds_meta['slot'];
+                        apg_sms_envia_sms( $configuracion, $telefono_propietario, $mensaje_pedido ); //Mensaje para el propietario
+                    }	
+                } else {
+                    foreach( $telefono_propietario as $administrador ) {
+                        apg_sms_envia_sms( $configuracion, $administrador, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para los propietarios
+                    }
+                }
+            } else if ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == 1 && $notificacion ) {
+				if ( !is_array( $telefono_propietario ) ) {		
 					apg_sms_envia_sms( $configuracion, $telefono_propietario, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para el propietario
 				} else {
 					foreach( $telefono_propietario as $administrador ) {
@@ -237,45 +279,24 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 					}
 				}
 			}
-			$mensaje = apg_sms_procesa_variables( $mensaje_recibido, $pedido, $configuracion['variables'] );
-		} else if ( $estado == __( 'Processing', 'apg_sms' ) ) {
-			if ( isset( $configuracion['notificacion'] ) && $configuracion['notificacion'] == 1 && $notificacion ) {
-				if ( !is_array( $telefono_propietario ) ) {		
-					//Only if the delivery date is between today and tomorrow at the same date
-					if( isset( $configuracion['notificacion_today_only'] ) && $configuracion['notificacion_today_only'] == 1 ) {
-						$tomorrow = strtotime(date('Y-m-d H:m', strtotime('+1 day')));
-						$jckwds_meta = jckwds_has_date_or_time($pedido);
-						if($jckwds_meta !== false && $jckwds_meta['time'] < $tomorrow) {
-							$mensaje_pedido = "Nuovo ordine n.: ".$pedido->id." - Da evadere il: ".$jckwds_meta['date']." @ ".$jckwds_meta['slot'];
-							apg_sms_envia_sms( $configuracion, $telefono_propietario, $mensaje_pedido ); //Mensaje para el propietario
-						}
-					}	else {
-						apg_sms_envia_sms( $configuracion, $telefono_propietario, 'not:'.$configuracion['notificacion_today_only'] ); //Mensaje para el propietario
-						//apg_sms_envia_sms( $configuracion, $telefono_propietario, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para el propietario
-					}
-				} else {
-					foreach( $telefono_propietario as $administrador ) {
-						apg_sms_envia_sms( $configuracion, $administrador, apg_sms_procesa_variables( $mensaje_pedido, $pedido, $configuracion['variables'] ) ); //Mensaje para los propietarios
-					}
-				}
-			}
 			$mensaje = apg_sms_procesa_variables( $mensaje_procesando, $pedido, $configuracion['variables'] );
-		} else if ( $estado == __( 'Completed', 'apg_sms' ) ) {
+		} 
+        else if ( $estado == __( 'Completed', 'apg_sms' ) ) {
 			$mensaje = apg_sms_procesa_variables( $mensaje_completado, $pedido, $configuracion['variables'] );
 		} else {
 			$mensaje = apg_sms_procesa_variables( $configuracion[$estado], $pedido, $configuracion['variables'] );
 		}
 
-		if ( ( !$internacional || ( isset( $configuracion['internacional'] ) && $configuracion['internacional'] == 1 ) ) && !$notificacion ) {
-			apg_sms_envia_sms( $configuracion, $telefono, $mensaje ); //Mensaje para el teléfono de facturación
-		}
-		if ( ( !$internacional_envio || ( isset( $configuracion['internacional'] ) && $configuracion['internacional'] == 1 ) ) && !$notificacion && $enviar_envio ) {
-			apg_sms_envia_sms( $configuracion, $telefono_envio, $mensaje ); //Mensaje para el teléfono de envío
-		}
+		// if ( ( !$internacional || ( isset( $configuracion['internacional'] ) && $configuracion['internacional'] == 1 ) ) && !$notificacion ) {
+		// 	apg_sms_envia_sms( $configuracion, $telefono, $mensaje ); //Mensaje para el teléfono de facturación
+		// }
+		// if ( ( !$internacional_envio || ( isset( $configuracion['internacional'] ) && $configuracion['internacional'] == 1 ) ) && !$notificacion && $enviar_envio ) {
+		// 	apg_sms_envia_sms( $configuracion, $telefono_envio, $mensaje ); //Mensaje para el teléfono de envío
+		// }
 	}
-	add_action( 'woocommerce_order_status_pending_to_on-hold_notification', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como recibido
+	//add_action( 'woocommerce_order_status_pending_to_on-hold_notification', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como recibido
 	add_action( 'woocommerce_order_status_processing', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como procesando
-	add_action( 'woocommerce_order_status_completed', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como completo
+	//add_action( 'woocommerce_order_status_completed', 'apg_sms_procesa_estados', 10 ); //Funciona cuando el pedido es marcado como completo
 
 	function apg_sms_notificacion( $pedido ) {
 		apg_sms_procesa_estados( $pedido, true );
@@ -285,6 +306,9 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	//Envía las notas de cliente por SMS
 	function apg_sms_procesa_notas( $datos ) {
 		global $configuracion, $wpml_activo;
+		
+		//Cargamos los proveedores SMS
+		include_once( 'includes/admin/proveedores.php' );
 	
 		$pedido					= new WC_Order( $datos['order_id'] );
 	
