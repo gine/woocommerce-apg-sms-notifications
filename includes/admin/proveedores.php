@@ -3,7 +3,7 @@
 function apg_sms_envia_sms( $apg_sms_settings, $telefono, $mensaje ) {
 	switch ( $apg_sms_settings['servicio'] ) {
 		case "bulksms":
-			$argumentos['body'] = array( 
+			$argumentos['body'] = array(
 				'username' 					=> $apg_sms_settings['usuario_bulksms'],
 				'password' 					=> $apg_sms_settings['contrasena_bulksms'],
 				'message' 					=> $mensaje,
@@ -26,13 +26,13 @@ function apg_sms_envia_sms( $apg_sms_settings, $telefono, $mensaje ) {
 			$respuesta = wp_remote_get( "https://www.isms.com.my/isms_send.php?un=" . $apg_sms_settings['usuario_isms'] . "&pwd=" . $apg_sms_settings['contrasena_isms'] . "&dstno=" . $telefono . "&msg=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&type=2" . "&sendid=" . $apg_sms_settings['telefono_isms'] );
 			break;
 		case "labsmobile":
-			$respuesta = wp_remote_get( "https://api.labsmobile.com/get/send.php?client=" . $apg_sms_settings['identificador_labsmobile'] . "&username=" . $apg_sms_settings['usuario_labsmobile'] . "&password=" . $apg_sms_settings['contrasena_labsmobile'] . "&msisdn=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&sender=" . $apg_sms_settings['sid_labsmobile'] );
-			break;			
+			$respuesta = wp_remote_get( "https://api.labsmobile.com/get/send.php?client=" . $apg_sms_settings['identificador_labsmobile'] . "&username=" . $apg_sms_settings['usuario_labsmobile'] . "&password=" . $apg_sms_settings['contrasena_labsmobile'] . "&msisdn=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( apg_sms_normaliza_mensaje( $mensaje ) ) . "&sender=" . $apg_sms_settings['sid_labsmobile'] );
+			break;
 		case "moreify":
 			$respuesta = wp_remote_get( "https://members.moreify.com/api/v1/sendSms?project=" . $apg_sms_settings['proyecto_moreify'] . "&password=" . $apg_sms_settings['identificador_moreify'] . "&phonenumber=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) );
 			break;
 		case "msg91":
-			$argumentos['body'] = array( 
+			$argumentos['body'] = array(
 				'authkey' 	=> $apg_sms_settings['clave_msg91'],
 				'mobiles' 	=> $telefono,
 				'message' 	=> apg_sms_codifica_el_mensaje( apg_sms_normaliza_mensaje( $mensaje ) ),
@@ -42,10 +42,11 @@ function apg_sms_envia_sms( $apg_sms_settings, $telefono, $mensaje ) {
 			$respuesta = wp_remote_post( "http://control.msg91.com/sendhttp.php", $argumentos );
 			break;
 		case "msgwow":
-			$respuesta = wp_remote_get( "https://my.msgwow.com/api/v2/sendsms?authkey=" . $apg_sms_settings['clave_msgwow'] . "&mobiles=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&sender=" . $apg_sms_settings['identificador_msgwow'] . "&route=" . $apg_sms_settings['ruta_msgwow'] . "&country=" . $apg_sms_settings['servidor_msgwow'] );
+			$respuesta = wp_remote_get( "http://my.msgwow.com/api/sendhttp.php?authkey=" . $apg_sms_settings['clave_msgwow'] . "&mobiles=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&sender=" . $apg_sms_settings['identificador_msgwow'] . "&route=" . $apg_sms_settings['ruta_msgwow'] . "&country=" . $apg_sms_settings['servidor_msgwow'] );
+			//$respuesta = wp_remote_get( "https://my.msgwow.com/api/v2/sendsms?authkey=" . $apg_sms_settings['clave_msgwow'] . "&mobiles=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&sender=" . $apg_sms_settings['identificador_msgwow'] . "&route=" . $apg_sms_settings['ruta_msgwow'] . "&country=" . $apg_sms_settings['servidor_msgwow'] );
 			break;
 		case "mvaayoo":
-			$argumentos['body'] = array( 
+			$argumentos['body'] = array(
 				'user' 			=> $apg_sms_settings['usuario_mvaayoo'] . ":" . $apg_sms_settings['contrasena_mvaayoo'],
 				'senderID' 		=> $apg_sms_settings['identificador_mvaayoo'],
 				'receipientno' 	=> $telefono,
@@ -79,7 +80,7 @@ function apg_sms_envia_sms( $apg_sms_settings, $telefono, $mensaje ) {
 			$respuesta = wp_remote_get( "https://www.sipdiscount.com/myaccount/sendsms.php?username=" . $apg_sms_settings['usuario_sipdiscount'] . "&password=" . $apg_sms_settings['contrasena_sipdiscount'] . "&from=" . $apg_sms_settings['telefono'] . "&to=" . $telefono . "&text=" . apg_sms_codifica_el_mensaje( $mensaje ) );
 			break;
 		case "smscountry":
-			$argumentos['body'] = array( 
+			$argumentos['body'] = array(
 				'User' 			=> $apg_sms_settings['usuario_smscountry'],
 				'passwd' 		=> $apg_sms_settings['contrasena_smscountry'],
 				'mobilenumber' 	=> $telefono,
@@ -94,7 +95,7 @@ function apg_sms_envia_sms( $apg_sms_settings, $telefono, $mensaje ) {
 			$respuesta = wp_remote_get( "https://www.smsdiscount.com/myaccount/sendsms.php?username=" . $apg_sms_settings['usuario_smsdiscount'] . "&password=" . $apg_sms_settings['contrasena_smsdiscount'] . "&from=" . $apg_sms_settings['telefono'] . "&to=" . $telefono . "&text=" . apg_sms_codifica_el_mensaje( $mensaje ) );
 			break;
 		case "smslane":
-			$argumentos['body'] = array( 
+			$argumentos['body'] = array(
 				'user' 		=> $apg_sms_settings['usuario_smslane'],
 				'password' 	=> $apg_sms_settings['contrasena_smslane'],
 				'msisdn' 	=> $telefono,
@@ -110,10 +111,10 @@ function apg_sms_envia_sms( $apg_sms_settings, $telefono, $mensaje ) {
 			break;
 		case "springedge":
 			$respuesta = wp_remote_get( "http://instantalerts.co/api/web/send/?apikey=" . $apg_sms_settings['clave_springedge'] . "&sender=" . $apg_sms_settings['identificador_springedge'] . "&to=" . $telefono . "&message=" . apg_sms_codifica_el_mensaje( $mensaje ) . "&format=json" );
-			break;			
+			break;
 		case "twilio":
 			$argumentos['header'] = "Accept-Charset: utf-8\r\n";
-			$argumentos['body'] = array( 
+			$argumentos['body'] = array(
 				'To' 	=> $telefono,
 				'From' 	=> $apg_sms_settings['telefono_twilio'],
 				'Body' 	=> $mensaje
@@ -150,8 +151,9 @@ function apg_sms_envia_sms( $apg_sms_settings, $telefono, $mensaje ) {
 
 	if ( isset( $apg_sms_settings['debug'] ) && $apg_sms_settings['debug'] == "1" && isset( $apg_sms_settings['campo_debug'] ) ) {
 		$correo	= __( 'Mobile number:', 'woocommerce-apg-sms-notifications' ) . "\r\n" . $telefono . "\r\n\r\n";
-		$correo	.= __( 'Message: ', 'woocommerce-apg-sms-notifications' ) . "\r\n" . $mensaje . "\r\n\r\n"; 
+		$correo	.= __( 'Message: ', 'woocommerce-apg-sms-notifications' ) . "\r\n" . $mensaje . "\r\n\r\n";
 		$correo	.= __( 'Gateway answer: ', 'woocommerce-apg-sms-notifications' ) . "\r\n" . print_r( $respuesta, true );
-		wp_mail( $apg_sms_settings['campo_debug'], 'WC - APG SMS Notifications', $correo, 'charset=UTF-8' . "\r\n" ); 
+		wp_mail( $apg_sms_settings['campo_debug'], 'WC - APG SMS Notifications', $correo, 'charset=UTF-8' . "\r\n" );
 	}
 }
+?>
